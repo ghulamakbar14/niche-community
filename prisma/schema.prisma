@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  username    String   @unique
+  email       String   @unique
+  password    String
+  avatarUrl   String?
+  bio         String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  posts       Post[]
+  comments    Comment[]
+  memberships CommunityMember[]
+  messages    Message[]
+  reactions Reaction[]
+}
+
+model Community {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  coverImage  String?
+  createdAt   DateTime @default(now())
+  createdBy   String
+  members     CommunityMember[]
+  posts       Post[]
+  messages    Message[]
+}
+
+model CommunityMember {
+  id          String   @id @default(uuid())
+  community   Community @relation(fields: [communityId], references: [id])
+  communityId String
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  role        String    @default("member")
+  joinedAt    DateTime  @default(now())
+}
+
+model Post {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  mediaUrl    String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  community   Community @relation(fields: [communityId], references: [id])
+  communityId String
+  comments    Comment[]
+  reactions   Reaction[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+  reactions Reaction[]
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  message     String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  community   Community @relation(fields: [communityId], references: [id])
+  communityId String
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  type      String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  post      Post?    @relation(fields: [postId], references: [id])
+  postId    String?
+  comment   Comment? @relation(fields: [commentId], references: [id])
+  commentId String?
+}
